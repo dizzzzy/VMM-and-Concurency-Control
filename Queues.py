@@ -1,13 +1,10 @@
-from Queue import PriorityQueue
-
-
-class Q(PriorityQueue):
+class Q:
     """
         Queue functionality:
         1. Automatically sorts the processes in the queue based on priority
     """
+
     def __init__(self, size):
-        PriorityQueue.__init__(self, size)
         self.items = []
 
     def getItem(self, key):
