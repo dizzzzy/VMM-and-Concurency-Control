@@ -4,7 +4,7 @@ class Q:
         1. Automatically sorts the processes in the queue based on priority
     """
 
-    def __init__(self, size):
+    def __init__(self):
         self.items = []
 
     def getItem(self, key):

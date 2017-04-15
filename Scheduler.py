@@ -11,8 +11,8 @@ with open("input.txt") as f:
         process_sub_items = proc.split(" ")
         p_list.append(Process(int(index + 1), process_sub_items[1], process_sub_items[2], int(process_sub_items[3]),
                               process_sub_items[0]))
-Q1 = Q(len(p_list))
-Q2 = Q(len(p_list))
+
+Q1 = Q2 = Q()
 
 
 class SchedulerThread(threading.Thread):
@@ -66,7 +66,7 @@ class SchedulerThread(threading.Thread):
                         if self.active_queue.getItem(0).has_started:
                             self.active_queue.getItem(0).resume(default_timer() - start_time)
                         else:
-                            self.active_queue.getItem(0).start(default_timer() - start_time)
+                            self.active_queue.getItem(0).start()
 
                         process_start_time = default_timer() - start_time
                         process_end_time = process_start_time + self.active_queue.getItem(0).get_timeslot()

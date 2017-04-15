@@ -68,9 +68,10 @@ class Process(threading.Thread):
         else:
             print self.name + " process has resumed at " + str(resumeTime) + ". Granted " + str(self.get_timeslot())
 
-    def start(self, startTime):
+    def run(self):
         self.pause_cond.acquire()
-        print self.name + " process has started at " + str(startTime)
+        print "Store: Variable 1, Value 5"
+        print self.name + " process has started at "
         super(Process, self).start()
         self.has_started = True
         self.pause_cond.release()
