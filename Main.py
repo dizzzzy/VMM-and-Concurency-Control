@@ -1,6 +1,10 @@
 from Scheduler import SchedulerThread
 
+"""
+Main Scheduler thread that spawns the process thread.
+Only 1 ProcessThread at a time.
 
+"""
 def main():
     """
     Main Scheduler thread that spawns the process thread.
