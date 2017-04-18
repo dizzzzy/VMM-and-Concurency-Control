@@ -1,7 +1,8 @@
 import threading
+import random
 from Process import Process
 from Queues import Q
-
+from VMM import VMM
 from timeit import default_timer
 
 p_list = []
@@ -14,8 +15,6 @@ with open("input.txt") as f:
 
 with open("threadconfig.txt") as f:
     thread_num = f.readline()
-
-Q1 = Q()
 
 
 class SchedulerThread(threading.Thread):
@@ -37,8 +36,9 @@ class SchedulerThread(threading.Thread):
         self.start_time = 0
         self.process_list = p_list
         # At starting, Q1 is active queue and Q2 is expired queue
-        self.expired_queue = Q1
+        self.expired_queue = Q()
         self.cores = []
+        self.vmm = VMM()
         self.cores_isempty_flag = []
         self.core_len = int(thread_num)
         self.process_length = len(p_list)
@@ -46,6 +46,7 @@ class SchedulerThread(threading.Thread):
         self.arrived_processes = 0
         self.flag = True
         self.arrival_lock = threading.Lock()
+        self.memory_lock = threading.Lock()
 
     def swap(self, core_index):
         self.arrival_lock.acquire()
@@ -67,7 +68,7 @@ class SchedulerThread(threading.Thread):
                 if self.cores[num].get_item(0).has_started:
                     self.cores[num].get_item(0).resume(default_timer() - self.start_time)
                 else:
-                    self.cores[num].get_item(0).has_started = True
+                    # self.cores[num].get_item(0).has_started = True
                     self.cores[num].get_item(0).start(default_timer() - self.start_time)
                 process_start_time = default_timer() - self.start_time
                 process_end_time = process_start_time + self.cores[num].get_item(0).get_timeslot()
@@ -75,8 +76,34 @@ class SchedulerThread(threading.Thread):
                 if self.cores[num].get_item(0).get_timeslot() >= self.cores[num].get_item(0).get_burst_time():
                     process_end_time = process_start_time + self.cores[num].get_item(0).get_burst_time()
                     going_to_finish = True
-                while (default_timer() - self.start_time) < process_end_time:
-                    i = 0  # <--- erase     NITESH HANDLE THE SWAPS AND THE RANDOM ACTIONS IN HERE
+                rand_selected = False
+                while (default_timer() - self.start_time) < process_end_time:  # main while loop where all the operations take place
+                    if not rand_selected:
+                        rand_time = random.randrange(0, 200)
+                        rand_selected = True
+                        remaining_time = process_end_time - (default_timer - self.start_time)
+                        if rand_time > remaining_time:
+                            pass  # do nothing
+                        else:
+                            stop_time = (default_timer() - self.start_time) + rand_time
+                            while (default_timer() - self.start_time) < stop_time:
+                                pass    # do nothing
+                            command = self.vmm.command_list[self.cores[num].get_item(0).next_command_index]
+                            temp = self.cores[num].get_item(0).next_command_index + 1
+                            self.cores[num].get_item(0).next_command_index = temp % len(self.vmm.command_list)
+                            if command[0] == 'Store':
+                                self.memory_lock.acquire()
+                                self.vmm.store(command[1], command[2])
+                                self.memory_lock.release()
+                            elif command[0] == 'Release':
+                                self.memory_lock.acquire()
+                                self.vmm.release(command[1])
+                                self.memory_lock.release()
+                            else:
+                                self.memory_lock.acquire()
+                                self.vmm.lookup(command[1])
+                                self.memory_lock.release()
+                            rand_selected = False
                 self.cores[num].get_item(0).pause(default_timer() - self.start_time,
                                                        going_to_finish)  # pause current process
                 if going_to_finish:
@@ -110,10 +137,23 @@ class SchedulerThread(threading.Thread):
                     self.arrived_processes += 1
                     self.arrival_lock.release()
 
+    def update_memory_age(self):
+        while self.flag:
+            if int((default_timer() - self.start_time) > 1):  # Start at time 1 second
+                ticks = 0
+                while self.terminated_processes != self.process_length:
+                    if int((default_timer - self.start_time) > 0.1*(ticks+1)):
+                        self.memory_lock.acquire()
+                        self.vmm.update_age_counters()
+                        self.memory_lock.release()
+                        ticks += 1
+
     def run(self):
         self.start_time = default_timer()
         t = threading.Thread(target=self.arrival_check)
         t.start()
+        t_mem = threading.Thread(target=self.update_memory_age())
+        t_mem.start()
         for num in range(self.core_len):
             q_dynamic = Q()
             variable_thread = threading.Thread(target=self.run_core, args=[num])
@@ -122,22 +162,19 @@ class SchedulerThread(threading.Thread):
             variable_thread.start()
         while self.flag:
             if int((default_timer() - self.start_time) > 1):  # Start at time 1 second
-                count = 0
                 while self.terminated_processes != self.process_length:
                     if not self.expired_queue.is_empty():
                         boolean, index = any_i(self.cores_isempty_flag)
                         if boolean:       # while any cores are empty
-                            count += 1
                             self.cores_isempty_flag[index] = False
                             self.swap(index)
 
 
-
-def any_e(iterable):
-    for element in iterable:
-        if element:
-            return [True, element]
-    return [False, '']
+# def any_e(iterable):
+#     for element in iterable:
+#         if element:
+#             return [True, element]
+#     return [False, '']
 
 
 def any_i(iterable):

@@ -17,6 +17,7 @@ class Process(threading.Thread):
         self.waiting_time = 0
         self.paused = False
         self.pause_cond = threading.Condition(threading.Lock())
+        self.next_command_index = 0
 
     def get_arrival_time(self):
         return self.arrival_time
