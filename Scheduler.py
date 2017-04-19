@@ -1,5 +1,6 @@
 import threading
 import random
+from decimal import *
 from Process import Process
 from Queues import Q
 from VMM import VMM
@@ -79,9 +80,11 @@ class SchedulerThread(threading.Thread):
                 rand_selected = False
                 while (default_timer() - self.start_time) < process_end_time:  # main while loop where all the operations take place
                     if not rand_selected:
-                        rand_time = random.randrange(0, 200)
+                        temp = random.randrange(0, 200)
+                        rand_time = Decimal(temp)/Decimal(1000)
+                        rand_time = float(rand_time)
                         rand_selected = True
-                        remaining_time = process_end_time - (default_timer - self.start_time)
+                        remaining_time = process_end_time - (default_timer() - self.start_time)
                         if rand_time > remaining_time:
                             pass  # do nothing
                         else:
@@ -142,7 +145,7 @@ class SchedulerThread(threading.Thread):
             if int((default_timer() - self.start_time) > 1):  # Start at time 1 second
                 ticks = 0
                 while self.terminated_processes != self.process_length:
-                    if int((default_timer - self.start_time) > 0.1*(ticks+1)):
+                    if (default_timer() - self.start_time) > 0.1*(ticks+1):
                         self.memory_lock.acquire()
                         self.vmm.update_age_counters()
                         self.memory_lock.release()
@@ -152,7 +155,7 @@ class SchedulerThread(threading.Thread):
         self.start_time = default_timer()
         t = threading.Thread(target=self.arrival_check)
         t.start()
-        t_mem = threading.Thread(target=self.update_memory_age())
+        t_mem = threading.Thread(target=self.update_memory_age)
         t_mem.start()
         for num in range(self.core_len):
             q_dynamic = Q()
@@ -168,13 +171,6 @@ class SchedulerThread(threading.Thread):
                         if boolean:       # while any cores are empty
                             self.cores_isempty_flag[index] = False
                             self.swap(index)
-
-
-# def any_e(iterable):
-#     for element in iterable:
-#         if element:
-#             return [True, element]
-#     return [False, '']
 
 
 def any_i(iterable):

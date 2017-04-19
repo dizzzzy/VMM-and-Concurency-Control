@@ -18,7 +18,7 @@ class Page:
             self.was_used = False
         self.lock.release()
 
-    def was_used(self):
+    def update_was_used(self):
         self.lock.acquire()
         self.was_used = True
         self.lock.release()
