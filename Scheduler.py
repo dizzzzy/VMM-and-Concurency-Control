@@ -98,14 +98,20 @@ class SchedulerThread(threading.Thread):
                                 self.memory_lock.acquire()
                                 self.vmm.store(command[1], command[2])
                                 self.memory_lock.release()
+                                print "Time" + str(default_timer() - self.start_time) + ", " + \
+                                      self.cores[num].get_item(0).name + ", Store: Variable " + str(command[1]) + ", Value " + str(command[2])
                             elif command[0] == 'Release':
                                 self.memory_lock.acquire()
                                 self.vmm.release(command[1])
                                 self.memory_lock.release()
-                            else:
+                                print "Time" + str(default_timer() - self.start_time) + ", " + \
+                                      self.cores[num].get_item(0).name + ", Release: Variable " + str(command[1])
+                            elif command[0] == 'Lookup':
                                 self.memory_lock.acquire()
-                                self.vmm.lookup(command[1])
+                                value = self.vmm.lookup(command[1])
                                 self.memory_lock.release()
+                                print "Time" + str(default_timer() - self.start_time) + ", " + \
+                                      self.cores[num].get_item(0).name + ", Lookup: Variable " + str(command[1]) + ", Value " + str(value)
                             rand_selected = False
                 self.cores[num].get_item(0).pause(default_timer() - self.start_time,
                                                        going_to_finish)  # pause current process

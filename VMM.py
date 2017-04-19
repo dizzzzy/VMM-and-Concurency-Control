@@ -47,7 +47,7 @@ class VMM:
             found = False
             for i in d:
                 variable = i.split(" ")
-                if variable[0] != variable_id:
+                if int(variable[0]) != int(variable_id):
                     disk.write(i)
                 else:
                     found = True
@@ -63,7 +63,7 @@ class VMM:
         boolean, index = any_i(page.var_id == variable_id for page in self.main_memory)  # found in main memory?
         if boolean:  #  yes
             self.main_memory[index].update_was_used()
-            return ["Main memory", self.main_memory[index].var_id, self.main_memory[index].var_value]
+            return self.main_memory[index].var_value
         else:  #  no
             disk = open(self.disk_memory, "r+")
             d = disk.readlines()
@@ -71,7 +71,7 @@ class VMM:
             found = False
             for i in d:
                 variable = i.split(" ")
-                if variable[0] != variable_id:
+                if int(variable[0]) != int(variable_id):
                     disk.write(i)
                 elif not found:   #  Makes sure that 2 swaps are not performed
                     found = True      # found variable
@@ -91,13 +91,17 @@ class VMM:
                         old_var_id, old_var_value = oldest_page.var_id, oldest_page.var_value     # found oldest variable in main mem
                         oldest_page.var_id = variable[0]
                         oldest_page.var_value = variable[1]
+                        oldest_page.aging_counter = 0
                         oldest_page.update_was_used()
                         temp_string = str(old_var_id) + " " + str(old_var_value)
                         disk.write(temp_string)
+                        print "Memory Manager, SWAP: Variable "+ str(oldest_page.var_id) + " with Variable " + str(old_var_id)
             disk.truncate()
             disk.close()
-        if not found:
-            return -1
+            if not found:
+                return -1
+            return oldest_page.var_value
+
 
     def update_age_counters(self):
         for page in self.main_memory:
